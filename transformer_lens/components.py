@@ -1331,6 +1331,8 @@ class GatedMLP(nn.Module):
         self.hook_pre = HookPoint()  # [batch, pos, d_mlp]
         # hook on the linear component of the input
         self.hook_pre_linear = HookPoint()  # [batch, pos, d_mlp]
+        # hook on the activation function output
+        self.hook_pre_activate = HookPoint()  # [batch, pos, d_mlp]
         # hook on act_fn(gate_output) * W_in(x) + b_in
         self.hook_post = HookPoint()  # [batch, pos, d_mlp]
 
@@ -1386,9 +1388,10 @@ class GatedMLP(nn.Module):
                         self.W_in,
                     )
                 )
+            pre_act_activated = self.hook_pre_activate(self.act_fn(pre_act))  # [batch, pos, d_mlp]
 
             post_act = self.hook_post(
-                (self.act_fn(pre_act) * pre_linear) + self.b_in
+                (pre_act_activated * pre_linear) + self.b_in
             )  # [batch, pos, d_mlp]
         else:
             mid_act = self.hook_mid(self.act_fn(pre_act))  # [batch, pos, d_mlp]
